@@ -1,31 +1,25 @@
-;;; cracker.el --- code completion, goto-definition and docs browsing for Crystal via cracker  -*- lexical-binding: t -*-
+;;; company-cracker.el --- code completion, goto-definition and docs browsing for Crystal via cracker
 
 ;;; Commentary:
 
 ;;; Code:
+
 (require 'crystal-mode)
 (require 'company)
 (require 'json)
 
 
-(defgroup cracker nil
+(defgroup company-cracker nil
   "Code completion, goto-definition and docs browsing for Crystal via cracker."
   :link '(url-link "https://github.com/TechMagister/emacs-racer/")
-  :group 'crystal-mode)
+  :group 'crystal)
 
-(defcustom cracker-cmd
+(defcustom company-cracker-cmd
   (or (executable-find "cracker")
       "/usr/local/bin/cracker")
   "Path to the cracker binary."
   :type 'file
-  :group 'cracker)
-
-(defcustom cracker-crystal-src-path
-  "/opt/crystal/src"
-  "Path to the crystal source code."
-  :type 'folder
-  :group 'cracker
-  )
+  :group 'company-cracker)
 
 (defun company-cracker--format-meta (candidate)
   (let ((name (plist-get candidate :name))
@@ -52,7 +46,7 @@
           (apply #'call-process-region
                  (point-min)
                  (+ (point) 1)
-                 cracker-cmd
+                 company-cracker-cmd
                  nil
                  temp-buffer
                  nil
@@ -120,8 +114,8 @@ Also, if point is on a dot, triggers a completion immediately."
     )
   )
 
-;; do stuff
-(defun company-cracker-backend (command &optional arg &rest ignored)
+;;;###autoload
+(defun company-cracker (command &optional arg &rest ignored)
   (interactive (list 'interactive))
 
   (case command
@@ -136,8 +130,5 @@ Also, if point is on a dot, triggers a completion immediately."
     )
   )
 
-(add-to-list 'company-backends 'company-cracker-backend)
-
-
-(provide 'cracker)
+(provide 'company-cracker)
 ;;; cracker.el ends here
