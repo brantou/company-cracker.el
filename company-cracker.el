@@ -11,17 +11,17 @@
 (require 'company)
 (require 'json)
 
-
 (defgroup company-cracker nil
   "Code completion, goto-definition and docs browsing for Crystal via cracker."
   :link '(url-link "https://github.com/TechMagister/emacs-racer/")
   :group 'crystal)
 
-(defcustom company-cracker-crystal-src-path
-  "/opt/crystal/src"
-  "Path to the crystal source code."
-  :type 'folder
-  :group 'company-cracker)
+(defcustom companycrackercmd
+     (or (executable-find "cracker")
+                "/usr/local/bin/cracker")
+     "Path to the cracker binary."
+     :type 'file
+     :group 'company-cracker)
 
 (defun company-cracker--format-meta (candidate)
   (let ((name (plist-get candidate :name))
