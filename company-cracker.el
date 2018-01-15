@@ -1,5 +1,8 @@
-;;; company-cracker.el --- code completion, goto-definition and docs browsing for Crystal via cracker
+;;; company-cracker.el --- company-mode backend for Crystal (using cracker)
 
+;; Copyright (C) 2017-2018
+;; Keywords: languages
+;; Package-Requires: ((company "0.8.0") (crystal-mode "0.1.0"))
 ;;; Commentary:
 
 ;;; Code:
@@ -14,11 +17,10 @@
   :link '(url-link "https://github.com/TechMagister/emacs-racer/")
   :group 'crystal)
 
-(defcustom company-cracker-cmd
-  (or (executable-find "cracker")
-      "/usr/local/bin/cracker")
-  "Path to the cracker binary."
-  :type 'file
+(defcustom company-cracker-crystal-src-path
+  "/opt/crystal/src"
+  "Path to the crystal source code."
+  :type 'folder
   :group 'company-cracker)
 
 (defun company-cracker--format-meta (candidate)
@@ -55,8 +57,6 @@
         (kill-buffer temp-buffer)
         ))
     )
-
-
 
 (defun company-cracker--make-candidate (candidate)
   "Prepare and format CANDIDATE."
@@ -96,8 +96,7 @@
 (defun company-cracker--prefix ()
   "Return the symbol to complete.
 Also, if point is on a dot, triggers a completion immediately."
-      (company-grab-symbol-cons "\\." 1)
-      )
+      (company-grab-symbol-cons "\\." 1))
 
 (defun company-cracker--annotation (meta)
   "Do some stuff with META."
@@ -117,18 +116,15 @@ Also, if point is on a dot, triggers a completion immediately."
 ;;;###autoload
 (defun company-cracker (command &optional arg &rest ignored)
   (interactive (list 'interactive))
-
   (case command
-    (interactive (company-begin-backend 'company-cracker-backend))
+    (interactive (company-begin-backend 'company-cracker))
     (prefix (and (eq major-mode 'crystal-mode)
                  (not (company-in-string-or-comment))
-                 (or (company-cracker--prefix) 'stop)
-                 ))
+                 (or (company-cracker--prefix) 'stop)))
+    (sorted t)
     (meta (get-text-property 1 'meta arg))
-    (candidates (company-cracker--candidates) )
-    (annotation (company-cracker--annotation (get-text-property 0 'meta arg)))
-    )
-  )
+    (candidates (company-cracker--candidates))
+    (annotation (company-cracker--annotation (get-text-property 0 'meta arg)))))
 
 (provide 'company-cracker)
-;;; cracker.el ends here
+;;; company-cracker.el ends here
