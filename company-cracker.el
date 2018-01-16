@@ -2,15 +2,13 @@
 
 ;; Copyright (C) 2017-2018
 ;; Keywords: languages
-;; Package-Version: 20180115.2233
-;; Package-Requires: ((company "0.9.0") (crystal-mode "0.1.0"))
+;; Package-Requires: ((company "0.8.0") (crystal-mode "0.1.0"))
 ;;; Commentary:
 
 ;;; Code:
 
 (require 'crystal-mode)
 (require 'company)
-(require 'company-template)
 (require 'json)
 
 (defgroup company-cracker nil
@@ -99,14 +97,26 @@ symbol is preceded by a \".\", ignoring `company-minimum-prefix-length'."
   (when (and (derived-mode-p 'crystal-mode)
              (process-live-p (get-process "cracker-server")))
     (let ((source-path (file-truename (crystal-find-project-root))))
-      (message source-path)
+      (company-cracker--send-add-path source-path 3))))
+
+(defun company-cracker--send-add-path (source-path cnt)
+  (when (> cnt 0)
+    (let ((cracker-cli-buf (generate-new-buffer "*cracker-cli-error*")))
       (unless (member source-path company-cracker--source-paths)
-        (call-process
-         company-cracker-cmd nil "*cracker-client*" nil
-         "client" "--add-path" source-path)
-        (when (zerop )
-          (setq company-cracker--source-paths
-                (append company-cracker--source-paths '(source-path))))))))
+        (let ((output-str
+               (prog2
+                   (call-process
+                    company-cracker-cmd nil cracker-cli-buf nil
+                    "client" "--add-path" source-path)
+                   (with-current-buffer cracker-cli-buf (buffer-string))
+                 (kill-buffer cracker-cli-buf))))
+          (message "company-cracker--send-add-path")
+          (if (string-match "success" output-str)
+              (setq company-cracker--source-paths
+                    (append company-cracker--source-paths '(source-path)))
+            (progn
+              (sleep-for 0 100)
+              (company-cracker--send-add-path source-path (- cnt 1)))))))))
 
 (defun company-cracker--make-candidate (candidate)
   "Prepare and format CANDIDATE."
@@ -175,6 +185,7 @@ Also, if point is on a dot, triggers a completion immediately."
     (prefix (and (derived-mode-p 'crystal-mode)
                  (not (company-in-string-or-comment))
                  (or (company-cracker--prefix) 'stop)))
+    (init (company-cracker--add-path))
     (meta
      (company-cracker--syntax-highlight (get-text-property 1 'meta arg)))
     (candidates (company-cracker--candidates))
@@ -194,6 +205,7 @@ Also, if point is on a dot, triggers a completion immediately."
   "Start cracker server."
   (interactive)
   (unless (process-live-p (get-process "cracker-server"))
+    (message "company-cracker-init")
     (let ((crystal-source-path
            (if company-cracker-lib-path
                company-cracker-lib-path
